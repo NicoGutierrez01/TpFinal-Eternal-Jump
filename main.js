@@ -1,6 +1,7 @@
 import Game from "./scenes/Game.js";
 import Preload from "./scenes/Preload.js";
 
+
 const config = {
   type: Phaser.AUTO,
   width: 750,

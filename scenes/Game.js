@@ -9,16 +9,18 @@ export default class Game extends Phaser.Scene {
     this.firstMove = true;
     this.platformTouched = false;
     this.score = -1;
+    this.timeLeft = 60; 
+    this.gameOver = false;
   }
 
   create() {
     this.addBackground();
 
-    // Creamos una plataforma inicial en la parte inferior de la pantalla
     this.plataformaInicial = this.physics.add.staticSprite(400, 1300, "platform").setScale(2);
     this.plataformaInicial.refreshBody();
 
     this.platformGroup = this.physics.add.group();
+    this.powerUpGroup = this.physics.add.group();
 
     const positionX = this.game.config.width / 2;
     const positionY = this.game.config.height * gameOptions.firstPlatformPosition;
@@ -33,19 +35,32 @@ export default class Game extends Phaser.Scene {
       this.positionPlatform(platform);
     }
 
-    // Posicionamos al jugador abajo en lugar de arriba
-    const playerStartY = this.game.config.height - 100; // Ajusta la posición inicial del jugador aquí
+    if (Phaser.Math.Between(0, 9) === 0) { 
+      let powerUp = this.powerUpGroup.create(0, 0, "watch");
+      powerUp.setScale(1.5);
+      powerUp.setImmovable(true);
+      powerUp.y = platform.y - platform.displayHeight / 2 - 20; 
+      powerUp.x = platform.x;
+    }
+    if (Phaser.Math.Between(0, 9) === 0) { 
+      let powerUp = this.powerUpGroup.create(0, 0, "spike");
+      powerUp.setScale(1.5);
+      powerUp.setImmovable(true);
+      powerUp.y = platform.y - platform.displayHeight / 2 - 20; 
+      powerUp.x = platform.x;
+    }
+
+    const playerStartY = this.game.config.height - 100; 
     this.player = this.physics.add.sprite(positionX, playerStartY, "player");
     this.player.setScale(0.2);
     this.player.setGravityY(gameOptions.gameGravity);
 
-    // Configuramos controles de teclado
     this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
     this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
     this.keySPACE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-    this.textTimer = this.add.text(10, 10, "0", {
+    this.textTimer = this.add.text(10, 10, "60", {
       fontSize: "32px",
       fill: "#fff",
     });
@@ -60,32 +75,23 @@ export default class Game extends Phaser.Scene {
       fill: "#fff",
     }).setOrigin(0.5, 0);
 
-    // Popup para iniciar el juego
-    this.textStart = this.add.text(this.game.config.width / 2, this.game.config.height / 2, "Presiona SPACE para iniciar", {
-      fontSize: "32px",
-      fill: "#fff",
-    }).setOrigin(0.5);
-    this.textStart.setVisible(true); // Lo mostramos inicialmente
-
-    // Colocamos colisiones
     this.physics.add.collider(this.platformGroup, this.player, this.handleCollision, null, this);
     this.physics.add.collider(this.plataformaInicial, this.player, this.handleCollision, null, this);
+
+    this.addTimer();
   }
 
   update() {
     const gameSpeedY = gameOptions.platformSpeed;
 
-    // Mover las plataformas hacia abajo y reposicionarlas si es necesario
     this.platformGroup.getChildren().forEach((platform) => {
       platform.y += gameSpeedY;
 
-      // Si una plataforma se mueve fuera de la pantalla, reposicionarla
       if (platform.getBounds().bottom > this.game.config.height) {
         this.positionPlatform(platform);
       }
     });
 
-    // Generar nuevas plataformas si no hay suficientes visibles
     if (this.platformGroup.getChildren().length < 10) {
       for (let i = this.platformGroup.getChildren().length; i < 10; i++) {
         let platform = this.platformGroup.create(0, 0, "platform");
@@ -94,67 +100,47 @@ export default class Game extends Phaser.Scene {
       }
     }
 
-    // Mover el fondo parallax
     this.moveParallax();
 
     if (this.firstMove) {
       this.firstMove = false;
-      this.addTimer();
       this.textFirstMove.setText("");
     }
 
-    // Ocultar el texto de inicio cuando se presiona SPACE
-    if (this.keySPACE.isDown && this.firstMove) {
-      this.textStart.setVisible(false);
-    }
-
-    // Manejo de las teclas A, D y W para movimiento y salto
     if (this.keyA.isDown) {
-      this.player.setVelocityX(-gameOptions.heroSpeed); // Mover a la izquierda
+      this.player.setVelocityX(-gameOptions.heroSpeed); 
     } else if (this.keyD.isDown) {
-      this.player.setVelocityX(gameOptions.heroSpeed); // Mover a la derecha
+      this.player.setVelocityX(gameOptions.heroSpeed); 
     } else {
-      this.player.setVelocityX(0); // Detenerse si ninguna tecla de movimiento está presionada
+      this.player.setVelocityX(0); 
     }
 
     if (this.keyW.isDown && this.player.body.touching.down) {
-      this.player.setVelocityY(-gameOptions.jumpForce); // Saltar si está en contacto con una plataforma y se presiona W
+      this.player.setVelocityY(-gameOptions.jumpForce); 
 
-      // Eliminar la plataforma inicial cuando el jugador salte
+  
       if (this.plataformaInicial) {
         this.plataformaInicial.destroy();
       }
     }
 
-    // Reiniciar el juego si el jugador sale de la pantalla
     if (this.player.y > this.game.config.height || this.player.y < 0) {
       this.scene.start("game");
     }
   }
 
   addBackground() {
-    this.gray = this.add.tileSprite(
-      this.game.config.width / 2,
-      this.game.config.height / 2,
-      this.game.config.width,
-      this.game.config.height,
-      "fondo-2"
-    );
     this.white = this.add.tileSprite(
       this.game.config.width / 2,
       this.game.config.height / 2,
       this.game.config.width,
       this.game.config.height,
-      "fondo-1"
+      "sky"
     );
 
     this.parallaxLayers = [
       {
-        speed: 0.2,
-        sprite: this.gray,
-      },
-      {
-        speed: 0.6,
+        speed: 0.8,
         sprite: this.white,
       },
     ];
@@ -188,7 +174,7 @@ export default class Game extends Phaser.Scene {
 
   addTimer() {
     this.time.addEvent({
-      delay: 1000,
+      delay: 1000, // 1 segundo
       callback: this.updateTimer,
       callbackScope: this,
       loop: true,
@@ -196,7 +182,11 @@ export default class Game extends Phaser.Scene {
   }
 
   updateTimer() {
-    this.textTimer.setText(parseInt(this.textTimer.text) + 1);
+    this.timeLeft--;
+    this.textTimer.setText(this.timeLeft);
+    if (this.timeLeft <= 0) {
+      this.scene.start("gameOver");
+    }
   }
 
   handleCollision(player, platform) {
@@ -205,5 +195,9 @@ export default class Game extends Phaser.Scene {
       this.score += 1;
       this.textScore.setText(this.score);
     }
+  }
+
+  collectPowerUp(player, powerUp) {
+    powerUp.disableBody(true, true); 
   }
 }

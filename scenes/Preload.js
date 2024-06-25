@@ -4,10 +4,11 @@ export default class Preload extends Phaser.Scene {
     }
   
     preload() {
-      this.load.image("fondo-1", "../public/assets/fondo-1.png");
-      this.load.image("fondo-2", "../public/assets/fondo-2.png");
-      this.load.image("platform", "../public/assets/plataforma.png");
-      this.load.spritesheet("player", "../public/assets/player.png", {
+      this.load.image("sky", "./public/assets/sky.png");
+      this.load.image("platform", "./public/assets/platform.png");
+      this.load.image("watch", "./public/assets/watch.png")
+      this.load.image("spike", "./public/assets/spike.png")
+      this.load.spritesheet("player", "./public/assets/player.png", {
         frameWidth: 184,
         frameHeight: 325
       });

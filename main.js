@@ -1,5 +1,7 @@
+import Start from "./scenes/Start.js";
 import Game from "./scenes/Game.js";
 import Preload from "./scenes/Preload.js";
+import gameOver from "./scenes/gameOver.js";
 
 
 const config = {
@@ -14,10 +16,10 @@ const config = {
   physics: {
     default: "arcade",
     arcade: {
-      debug: true,
+      debug: false,
     },
   },
-  scene: [Preload, Game],
+  scene: [Preload, Start, Game, gameOver],
 };
 
 window.game = new Phaser.Game(config);

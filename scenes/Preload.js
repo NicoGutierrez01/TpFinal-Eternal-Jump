@@ -8,14 +8,15 @@ export default class Preload extends Phaser.Scene {
       this.load.image("platform", "./public/assets/platform.png");
       this.load.image("watch", "./public/assets/watch.png")
       this.load.image("spike", "./public/assets/spike.png")
+      this.load.image("restart", "./public/assets/restart.png")
       this.load.spritesheet("player", "./public/assets/player.png", {
-        frameWidth: 184,
-        frameHeight: 325
+        frameWidth: 158,
+        frameHeight: 262
       });
     }
   
     create() {
       // crear animaciones
-      this.scene.start("game");
+      this.scene.start("start");
     }
   }

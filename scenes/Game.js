@@ -9,7 +9,7 @@ export default class Game extends Phaser.Scene {
     this.firstMove = true;
     this.platformTouched = false;
     this.score = -1;
-    this.timeLeft = 60; 
+    this.timeLeft = 30; 
     this.gameOver = false;
   }
 
@@ -25,35 +25,48 @@ export default class Game extends Phaser.Scene {
     const positionX = this.game.config.width / 2;
     const positionY = this.game.config.height * gameOptions.firstPlatformPosition;
 
-    const platform = this.platformGroup.create(positionX, positionY, "platform");
-    platform.setScale(0.3, 1);
-    platform.setImmovable(true);
+
 
     for (let i = 0; i < 10; i++) {
       let platform = this.platformGroup.create(0, 0, "platform");
       platform.setImmovable(true);
-      this.positionPlatform(platform);
+      this.positionPlatform(platform, i+1);
+
+      if (Phaser.Math.Between(0, 9) < 5) { 
+        let powerUp = this.powerUpGroup.create(platform.x, platform.y - platform.displayHeight / 2 - 20, "watch");
+        powerUp.setScale(1.5);
+        powerUp.setGravityY(1200);
+      }
+      if (Phaser.Math.Between(0, 9) < 5) { 
+        let powerUp = this.powerUpGroup.create(platform.x, platform.y - platform.displayHeight / 2 - 20, "spike");
+        powerUp.setScale(1.5);
+        powerUp.setGravityY(1200);
+      }
+      
+
+      
     }
 
-    if (Phaser.Math.Between(0, 9) === 0) { 
-      let powerUp = this.powerUpGroup.create(0, 0, "watch");
-      powerUp.setScale(1.5);
-      powerUp.setImmovable(true);
-      powerUp.y = platform.y - platform.displayHeight / 2 - 20; 
-      powerUp.x = platform.x;
-    }
-    if (Phaser.Math.Between(0, 9) === 0) { 
-      let powerUp = this.powerUpGroup.create(0, 0, "spike");
-      powerUp.setScale(1.5);
-      powerUp.setImmovable(true);
-      powerUp.y = platform.y - platform.displayHeight / 2 - 20; 
-      powerUp.x = platform.x;
-    }
 
-    const playerStartY = this.game.config.height - 100; 
+
+    const playerStartY = this.game.config.height - 150; 
     this.player = this.physics.add.sprite(positionX, playerStartY, "player");
-    this.player.setScale(0.2);
+    this.player.setScale(0.5);
     this.player.setGravityY(gameOptions.gameGravity);
+
+    this.anims.create({
+      key: 'jumpLeft',
+      frames: this.anims.generateFrameNumbers('player', { start: 4, end: 8 }),
+      frameRate: 8,
+      repeat: 0
+    });
+
+    this.anims.create({
+      key: 'jumpRight',
+      frames: this.anims.generateFrameNumbers('player', { start: 2, end: 0 }),
+      frameRate: 8,
+      repeat: 0
+    });
 
     this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
@@ -77,6 +90,7 @@ export default class Game extends Phaser.Scene {
 
     this.physics.add.collider(this.platformGroup, this.player, this.handleCollision, null, this);
     this.physics.add.collider(this.plataformaInicial, this.player, this.handleCollision, null, this);
+    this.physics.add.collider(this.platformGroup, this.powerUpGroup);
 
     this.addTimer();
   }
@@ -88,17 +102,18 @@ export default class Game extends Phaser.Scene {
       platform.y += gameSpeedY;
 
       if (platform.getBounds().bottom > this.game.config.height) {
+        console.log("update", platform.y)
         this.positionPlatform(platform);
       }
     });
 
-    if (this.platformGroup.getChildren().length < 10) {
-      for (let i = this.platformGroup.getChildren().length; i < 10; i++) {
-        let platform = this.platformGroup.create(0, 0, "platform");
-        platform.setImmovable(true);
-        this.positionPlatform(platform);
-      }
-    }
+    // if (this.platformGroup.getChildren().length < 10) {
+    //   for (let i = this.platformGroup.getChildren().length; i < 10; i++) {
+    //     let platform = this.platformGroup.create(0, 0, "platform");
+    //     platform.setImmovable(true);
+    //     this.positionPlatform(platform);
+    //   }
+    // }
 
     this.moveParallax();
 
@@ -108,9 +123,11 @@ export default class Game extends Phaser.Scene {
     }
 
     if (this.keyA.isDown) {
-      this.player.setVelocityX(-gameOptions.heroSpeed); 
+      this.player.setVelocityX(-gameOptions.heroSpeed);
+      this.player.anims.play("jumpRight") 
     } else if (this.keyD.isDown) {
-      this.player.setVelocityX(gameOptions.heroSpeed); 
+      this.player.setVelocityX(gameOptions.heroSpeed);
+      this.player.anims.play("jumpLeft") 
     } else {
       this.player.setVelocityX(0); 
     }
@@ -125,7 +142,7 @@ export default class Game extends Phaser.Scene {
     }
 
     if (this.player.y > this.game.config.height || this.player.y < 0) {
-      this.scene.start("game");
+      this.scene.start("gameOver");
     }
   }
 
@@ -152,8 +169,10 @@ export default class Game extends Phaser.Scene {
     });
   }
 
-  positionPlatform(platform) {
-    platform.y = this.getLowestPlatform() + this.randomValue(gameOptions.platformVerticalDistanceRange);
+  positionPlatform(platform, index = 0) {
+    const altura = this.getHighesPlatform() === 0 ? index*300 : this.getHighesPlatform();
+    platform.y =  altura - this.randomValue(gameOptions.platformVerticalDistanceRange);
+    console.log("posicion", platform.y)
     platform.x = this.game.config.width / 2 + this.randomValue(gameOptions.platformHorizontalDistanceRange) * Phaser.Math.RND.sign();
     platform.displayWidth = gameOptions.platformLengthRange[1];
   }
@@ -162,14 +181,24 @@ export default class Game extends Phaser.Scene {
     return Phaser.Math.Between(a[0], a[1]);
   }
 
-  getLowestPlatform() {
-    let lowestPlatform = 0;
+  // getLowestPlatform() {
+  //   let lowestPlatform = 0;
+  //   const hijos = this.platformGroup.getChildren();
+
+  //   hijos.forEach(function (platform) {
+  //     lowestPlatform = Math.max(lowestPlatform, platform.y);
+  //   });
+  //   return lowestPlatform;
+  // }
+  
+  getHighesPlatform() {
+    let highesPlatform = this.game.config.height;
     const hijos = this.platformGroup.getChildren();
 
     hijos.forEach(function (platform) {
-      lowestPlatform = Math.max(lowestPlatform, platform.y);
+      highesPlatform = Math.min(highesPlatform, platform.y);
     });
-    return lowestPlatform;
+    return highesPlatform;
   }
 
   addTimer() {

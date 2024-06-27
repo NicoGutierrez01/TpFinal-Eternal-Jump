@@ -25,29 +25,36 @@ export default class Game extends Phaser.Scene {
     const positionX = this.game.config.width / 2;
     const positionY = this.game.config.height * gameOptions.firstPlatformPosition;
 
-
-
+    let randomIndex = Phaser.Math.Between(0, 9);
+    
     for (let i = 0; i < 10; i++) {
       let platform = this.platformGroup.create(0, 0, "platform");
       platform.setImmovable(true);
       this.positionPlatform(platform, i+1);
 
-      if (Phaser.Math.Between(0, 9) < 5) { 
-        let powerUp = this.powerUpGroup.create(platform.x, platform.y - platform.displayHeight / 2 - 20, "watch");
-        powerUp.setScale(1.5);
-        powerUp.setGravityY(1200);
-      }
-      if (Phaser.Math.Between(0, 9) < 5) { 
-        let powerUp = this.powerUpGroup.create(platform.x, platform.y - platform.displayHeight / 2 - 20, "spike");
-        powerUp.setScale(1.5);
-        powerUp.setGravityY(1200);
-      }
-      
+      // if (Phaser.Math.Between(0, 9) < 1) { 
+      //   let powerUp = this.powerUpGroup.create(platform.x, platform.y - platform.displayHeight / 2 - 20, "watch");
+      //   powerUp.setScale(1.5);
+      //   powerUp.setGravityY(1200);
+      // }
+      // if (Phaser.Math.Between(0, 9) < 3) { 
+      //   let powerUp = this.powerUpGroup.create(platform.x, platform.y - platform.displayHeight / 2 - 20, "spike");
+      //   powerUp.setScale(1.5);
+      //   powerUp.setGravityY(1200);
+      // }
 
+      if (i === randomIndex) {
+        this.tweens.add({
+          targets: platform,
+          x: platform.x - 150, 
+          duration: 2000, 
+          ease: 'Power1', 
+          yoyo: true, 
+          repeat: -1 
+        });
+      }
       
     }
-
-
 
     const playerStartY = this.game.config.height - 150; 
     this.player = this.physics.add.sprite(positionX, playerStartY, "player");
@@ -106,6 +113,8 @@ export default class Game extends Phaser.Scene {
         this.positionPlatform(platform);
       }
     });
+
+
 
     // if (this.platformGroup.getChildren().length < 10) {
     //   for (let i = this.platformGroup.getChildren().length; i < 10; i++) {
@@ -175,6 +184,16 @@ export default class Game extends Phaser.Scene {
     console.log("posicion", platform.y)
     platform.x = this.game.config.width / 2 + this.randomValue(gameOptions.platformHorizontalDistanceRange) * Phaser.Math.RND.sign();
     platform.displayWidth = gameOptions.platformLengthRange[1];
+    if (Phaser.Math.Between(0, 9) < 1) { 
+      let powerUp = this.powerUpGroup.create(platform.x, platform.y - platform.displayHeight / 2 - 20, "watch");
+      powerUp.setScale(1.5);
+      powerUp.setGravityY(1200);
+    }
+    if (Phaser.Math.Between(0, 9) < 3) { 
+      let powerUp = this.powerUpGroup.create(platform.x, platform.y - platform.displayHeight / 2 - 20, "spike");
+      powerUp.setScale(1.5);
+      powerUp.setGravityY(1200);
+    }
   }
 
   randomValue(a) {
@@ -203,7 +222,7 @@ export default class Game extends Phaser.Scene {
 
   addTimer() {
     this.time.addEvent({
-      delay: 1000, // 1 segundo
+      delay: 1000,
       callback: this.updateTimer,
       callbackScope: this,
       loop: true,

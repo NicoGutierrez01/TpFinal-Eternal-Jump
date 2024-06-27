@@ -46,7 +46,7 @@ export default class Game extends Phaser.Scene {
       if (i === randomIndex) {
         this.tweens.add({
           targets: platform,
-          x: platform.x - 200, 
+          x: platform.x - 150, 
           duration: 2000, 
           ease: 'Power1', 
           yoyo: true, 
@@ -63,14 +63,20 @@ export default class Game extends Phaser.Scene {
 
     this.anims.create({
       key: 'jumpLeft',
-      frames: this.anims.generateFrameNumbers('player', { start: 4, end: 8 }),
+      frames: this.anims.generateFrameNumbers('player', { 
+        start: 4, 
+        end: 8
+      }),
       frameRate: 8,
       repeat: 0
     });
 
     this.anims.create({
       key: 'jumpRight',
-      frames: this.anims.generateFrameNumbers('player', { start: 2, end: 0 }),
+      frames: this.anims.generateFrameNumbers('player', { 
+        start: 2, 
+        end: 0
+      }),
       frameRate: 8,
       repeat: 0
     });

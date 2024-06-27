@@ -8,7 +8,7 @@ export default class Preload extends Phaser.Scene {
       this.load.image("platform", "./public/assets/platform.png");
       this.load.image("watch", "./public/assets/watch.png")
       this.load.image("spike", "./public/assets/spike.png")
-      this.load.image("reset", "./public/assets/reset.png")
+      this.load.image("restart", "./public/assets/restart.png")
       this.load.image("title", "./public/assets/title.png")
       this.load.image("press", "./public/assets/press.png")
       this.load.image("any", "./public/assets/any.png")

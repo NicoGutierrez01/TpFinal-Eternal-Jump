@@ -8,7 +8,7 @@ export default class gameOver extends Phaser.Scene {
 
         this.add.text(400, 300, 'Game Over', { fontSize: '50px', fill: '#000000'}).setOrigin(0.5);
 
-        const restartButton = this.add.image(375, 800, 'reset').setOrigin(0.5);
+        const restartButton = this.add.image(375, 800, 'restart').setOrigin(0.5);
     
         restartButton.setInteractive({ cursor: 'pointer' });
         restartButton.setScale(0.4); 

@@ -46,7 +46,7 @@ export default class Game extends Phaser.Scene {
       if (i === randomIndex) {
         this.tweens.add({
           targets: platform,
-          x: platform.x - 150, 
+          x: platform.x - 200, 
           duration: 2000, 
           ease: 'Power1', 
           yoyo: true, 
@@ -166,7 +166,7 @@ export default class Game extends Phaser.Scene {
 
     this.parallaxLayers = [
       {
-        speed: 0.8,
+        speed: 2,
         sprite: this.white,
       },
     ];

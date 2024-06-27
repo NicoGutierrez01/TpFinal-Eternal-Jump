@@ -9,8 +9,9 @@ export default class Start extends Phaser.Scene {
 
     create() {
         this.add.image(750, 1334, 'sky').setOrigin(1);
-
-        this.add.text(400, 300, 'Eternal Jump', { fontSize: '50px', fill: '#000000'}).setOrigin(0.5);
+        this.add.image(375, 350, 'title').setOrigin(0.5);
+        this.add.image(375, 730, 'press').setOrigin(0.5);
+        this.add.image(375, 1000, 'any').setOrigin(0.5);
     
         this.plataformaInicial = this.physics.add.staticSprite(400, 1300, "platform").setScale(2);
         

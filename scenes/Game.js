@@ -8,9 +8,10 @@ export default class Game extends Phaser.Scene {
   init() {
     this.firstMove = true;
     this.platformTouched = false;
-    this.score = -1;
+    this.score = 0;
     this.timeLeft = 30; 
     this.gameOver = false;
+    this.maxScore = localStorage.getItem('maxScore') || 0;
   }
 
   create() {
@@ -30,18 +31,7 @@ export default class Game extends Phaser.Scene {
     for (let i = 0; i < 10; i++) {
       let platform = this.platformGroup.create(0, 0, "platform");
       platform.setImmovable(true);
-      this.positionPlatform(platform, i+1);
-
-      // if (Phaser.Math.Between(0, 9) < 1) { 
-      //   let powerUp = this.powerUpGroup.create(platform.x, platform.y - platform.displayHeight / 2 - 20, "watch");
-      //   powerUp.setScale(1.5);
-      //   powerUp.setGravityY(1200);
-      // }
-      // if (Phaser.Math.Between(0, 9) < 3) { 
-      //   let powerUp = this.powerUpGroup.create(platform.x, platform.y - platform.displayHeight / 2 - 20, "spike");
-      //   powerUp.setScale(1.5);
-      //   powerUp.setGravityY(1200);
-      // }
+      this.positionPlatform(platform, i + 1);
 
       if (i === randomIndex) {
         this.tweens.add({
@@ -53,7 +43,6 @@ export default class Game extends Phaser.Scene {
           repeat: -1 
         });
       }
-      
     }
 
     const playerStartY = this.game.config.height - 150; 
@@ -62,20 +51,20 @@ export default class Game extends Phaser.Scene {
     this.player.setGravityY(gameOptions.gameGravity);
 
     this.anims.create({
-      key: 'jumpLeft',
+      key: 'jumpRight',
       frames: this.anims.generateFrameNumbers('player', { 
-        start: 4, 
-        end: 8
+        start: 0, 
+        end: 3
       }),
       frameRate: 8,
       repeat: 0
     });
 
     this.anims.create({
-      key: 'jumpRight',
+      key: 'jumpLeft',
       frames: this.anims.generateFrameNumbers('player', { 
-        start: 2, 
-        end: 0
+        start: 5, 
+        end: 10
       }),
       frameRate: 8,
       repeat: 0
@@ -86,24 +75,22 @@ export default class Game extends Phaser.Scene {
     this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
     this.keySPACE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-    this.textTimer = this.add.text(10, 10, "60", {
-      fontSize: "32px",
-      fill: "#fff",
+    this.textTimer = this.add.text(10, 10, "Time : 30 ", {
+      fontSize: "40px",
+      fill: "#ffd045",
     });
 
-    this.textScore = this.add.text(this.game.config.width - 10, 10, "0", {
-      fontSize: "32px",
-      fill: "#fff",
+    this.textScore = this.add.text(this.game.config.width - 10, 10, "Score: 0", {
+      fontSize: "40px",
+      fill: "#ffd045",
     }).setOrigin(1, 0);
-
-    this.textFirstMove = this.add.text(positionX, 500, "Presiona A, D para moverte y W para saltar", {
-      fontSize: "32px",
-      fill: "#fff",
-    }).setOrigin(0.5, 0);
+  
 
     this.physics.add.collider(this.platformGroup, this.player, this.handleCollision, null, this);
     this.physics.add.collider(this.plataformaInicial, this.player, this.handleCollision, null, this);
     this.physics.add.collider(this.platformGroup, this.powerUpGroup);
+
+    this.physics.add.overlap(this.player, this.powerUpGroup, this.collectPowerUp, null, this);
 
     this.addTimer();
   }
@@ -115,34 +102,23 @@ export default class Game extends Phaser.Scene {
       platform.y += gameSpeedY;
 
       if (platform.getBounds().bottom > this.game.config.height) {
-        console.log("update", platform.y)
         this.positionPlatform(platform);
       }
     });
-
-
-
-    // if (this.platformGroup.getChildren().length < 10) {
-    //   for (let i = this.platformGroup.getChildren().length; i < 10; i++) {
-    //     let platform = this.platformGroup.create(0, 0, "platform");
-    //     platform.setImmovable(true);
-    //     this.positionPlatform(platform);
-    //   }
-    // }
 
     this.moveParallax();
 
     if (this.firstMove) {
       this.firstMove = false;
-      this.textFirstMove.setText("");
+      
     }
 
     if (this.keyA.isDown) {
       this.player.setVelocityX(-gameOptions.heroSpeed);
-      this.player.anims.play("jumpRight") 
+      this.player.anims.play("jumpLeft", true);
     } else if (this.keyD.isDown) {
       this.player.setVelocityX(gameOptions.heroSpeed);
-      this.player.anims.play("jumpLeft") 
+      this.player.anims.play("jumpRight", true);
     } else {
       this.player.setVelocityX(0); 
     }
@@ -150,14 +126,38 @@ export default class Game extends Phaser.Scene {
     if (this.keyW.isDown && this.player.body.touching.down) {
       this.player.setVelocityY(-gameOptions.jumpForce); 
 
-  
       if (this.plataformaInicial) {
         this.plataformaInicial.destroy();
       }
+
+      this.handleJump();
     }
 
     if (this.player.y > this.game.config.height || this.player.y < 0) {
-      this.scene.start("gameOver");
+      this.gameOverHandler("fall");
+    }
+    
+  }
+
+  handleJump() {
+    this.platformTouched = false; 
+    this.score += 100; 
+    this.updateScoreDisplay(); 
+}
+
+
+  gameOverHandler(cause) {
+    // Mostrar pantalla de gameOver con puntaje y verificar récord
+    this.scene.start("gameOver", {
+        cause: cause,
+        score: this.score,
+        maxScore: this.maxScore
+    });
+
+    // Actualizar puntaje máximo si se estableció un nuevo récord
+    if (this.score > this.maxScore) {
+        this.maxScore = this.score;
+        localStorage.setItem('maxScore', this.maxScore);
     }
   }
 
@@ -185,17 +185,17 @@ export default class Game extends Phaser.Scene {
   }
 
   positionPlatform(platform, index = 0) {
-    const altura = this.getHighesPlatform() === 0 ? index*300 : this.getHighesPlatform();
-    platform.y =  altura - this.randomValue(gameOptions.platformVerticalDistanceRange);
-    console.log("posicion", platform.y)
+    const altura = this.getHighesPlatform() === 0 ? index * 300 : this.getHighesPlatform();
+    platform.y = altura - this.randomValue(gameOptions.platformVerticalDistanceRange);
     platform.x = this.game.config.width / 2 + this.randomValue(gameOptions.platformHorizontalDistanceRange) * Phaser.Math.RND.sign();
     platform.displayWidth = gameOptions.platformLengthRange[1];
+    
     if (Phaser.Math.Between(0, 9) < 1) { 
       let powerUp = this.powerUpGroup.create(platform.x, platform.y - platform.displayHeight / 2 - 20, "watch");
       powerUp.setScale(1.5);
       powerUp.setGravityY(1200);
     }
-    if (Phaser.Math.Between(0, 9) < 3) { 
+    if (Phaser.Math.Between(0, 9) < 1) { 
       let powerUp = this.powerUpGroup.create(platform.x, platform.y - platform.displayHeight / 2 - 20, "spike");
       powerUp.setScale(1.5);
       powerUp.setGravityY(1200);
@@ -206,16 +206,6 @@ export default class Game extends Phaser.Scene {
     return Phaser.Math.Between(a[0], a[1]);
   }
 
-  // getLowestPlatform() {
-  //   let lowestPlatform = 0;
-  //   const hijos = this.platformGroup.getChildren();
-
-  //   hijos.forEach(function (platform) {
-  //     lowestPlatform = Math.max(lowestPlatform, platform.y);
-  //   });
-  //   return lowestPlatform;
-  // }
-  
   getHighesPlatform() {
     let highesPlatform = this.game.config.height;
     const hijos = this.platformGroup.getChildren();
@@ -239,19 +229,38 @@ export default class Game extends Phaser.Scene {
     this.timeLeft--;
     this.textTimer.setText(this.timeLeft);
     if (this.timeLeft <= 0) {
-      this.scene.start("gameOver");
+      this.gameOverHandler("time");
     }
   }
 
   handleCollision(player, platform) {
     if (!this.platformTouched) {
-      this.platformTouched = true;
-      this.score += 1;
-      this.textScore.setText(this.score);
+        this.platformTouched = true;
+        this.score += 100; 
+        this.updateScoreDisplay();
     }
   }
+  updateScoreDisplay() {
+    this.tweens.addCounter({
+        from: parseInt(this.textScore.text.split(': ')[1]),
+        to: this.score,
+        duration: 500,
+        onUpdate: (tween) => {
+            this.textScore.setText('Score: ' + Math.floor(tween.getValue()));
+        }
+    });
+  }
+
+
+
+
 
   collectPowerUp(player, powerUp) {
-    powerUp.disableBody(true, true); 
+    if (powerUp.texture.key === "watch") {
+      this.timeLeft += 10;
+      powerUp.destroy();
+    } else if (powerUp.texture.key === "spike") {
+      this.gameOverHandler("spike");
+    }
   }
 }

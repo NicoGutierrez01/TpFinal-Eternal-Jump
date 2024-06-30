@@ -9,9 +9,10 @@ export default class Game extends Phaser.Scene {
     this.firstMove = true;
     this.platformTouched = false;
     this.score = 0;
-    this.timeLeft = 30; 
+    this.timeLeft = 60; 
     this.gameOver = false;
     this.maxScore = localStorage.getItem('maxScore') || 0;
+    this.platformSpeed = gameOptions.platformSpeed;
   }
 
   create() {
@@ -27,6 +28,8 @@ export default class Game extends Phaser.Scene {
     const positionY = this.game.config.height * gameOptions.firstPlatformPosition;
 
     let randomIndex = Phaser.Math.Between(0, 9);
+    let platformToDisappearIndex = Phaser.Math.Between(0, 9);
+    this.platformToDisappear = null;
     
     for (let i = 0; i < 10; i++) {
       let platform = this.platformGroup.create(0, 0, "platform");
@@ -43,12 +46,16 @@ export default class Game extends Phaser.Scene {
           repeat: -1 
         });
       }
+
+      if (i === platformToDisappearIndex) {
+        this.platformToDisappear = platform;
+      }
     }
 
     const playerStartY = this.game.config.height - 150; 
     this.player = this.physics.add.sprite(positionX, playerStartY, "player");
     this.player.setScale(0.5);
-    this.player.setGravityY(gameOptions.gameGravity);
+    this.player.setGravityY(gameOptions.gameGravity); 
 
     this.anims.create({
       key: 'jumpRight',
@@ -64,7 +71,7 @@ export default class Game extends Phaser.Scene {
       key: 'jumpLeft',
       frames: this.anims.generateFrameNumbers('player', { 
         start: 5, 
-        end: 10
+        end: 6
       }),
       frameRate: 8,
       repeat: 0
@@ -73,9 +80,8 @@ export default class Game extends Phaser.Scene {
     this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
     this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-    this.keySPACE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-    this.textTimer = this.add.text(10, 10, "Time : 30 ", {
+    this.textTimer = this.add.text(10, 10, "Time: 60 ", {
       fontSize: "40px",
       fill: "#ffd045",
     });
@@ -93,10 +99,11 @@ export default class Game extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.powerUpGroup, this.collectPowerUp, null, this);
 
     this.addTimer();
+    this.addSpeedIncreaseTimer();
   }
 
   update() {
-    const gameSpeedY = gameOptions.platformSpeed;
+    const gameSpeedY = this.platformSpeed;
 
     this.platformGroup.getChildren().forEach((platform) => {
       platform.y += gameSpeedY;
@@ -139,12 +146,24 @@ export default class Game extends Phaser.Scene {
     
   }
 
+  addSpeedIncreaseTimer() {
+    this.time.addEvent({
+      delay: 5000, // 5 segundos
+      callback: this.increasePlatformSpeed,
+      callbackScope: this,
+      loop: true,
+    });
+  }
+  
+  increasePlatformSpeed() {
+    this.platformSpeed += 1;
+  }
+
   handleJump() {
     this.platformTouched = false; 
     this.score += 100; 
     this.updateScoreDisplay(); 
-}
-
+  }
 
   gameOverHandler(cause) {
     // Mostrar pantalla de gameOver con puntaje y verificar récord
@@ -227,7 +246,7 @@ export default class Game extends Phaser.Scene {
 
   updateTimer() {
     this.timeLeft--;
-    this.textTimer.setText(this.timeLeft);
+    this.textTimer.setText("Time: " + this.timeLeft);
     if (this.timeLeft <= 0) {
       this.gameOverHandler("time");
     }
@@ -235,11 +254,19 @@ export default class Game extends Phaser.Scene {
 
   handleCollision(player, platform) {
     if (!this.platformTouched) {
-        this.platformTouched = true;
-        this.score += 100; 
-        this.updateScoreDisplay();
+      this.platformTouched = true;
+      this.score += 100; 
+      this.updateScoreDisplay();
+    }
+    if (platform === this.platformToDisappear) {
+      this.time.delayedCall(1000, () => {
+        platform.destroy();
+        this.platformToDisappear = null; // Para que no se destruya de nuevo
+      });
     }
   }
+  
+
   updateScoreDisplay() {
     this.tweens.addCounter({
         from: parseInt(this.textScore.text.split(': ')[1]),
@@ -251,13 +278,9 @@ export default class Game extends Phaser.Scene {
     });
   }
 
-
-
-
-
   collectPowerUp(player, powerUp) {
     if (powerUp.texture.key === "watch") {
-      this.timeLeft += 10;
+      this.timeLeft += 15;
       powerUp.destroy();
     } else if (powerUp.texture.key === "spike") {
       this.gameOverHandler("spike");

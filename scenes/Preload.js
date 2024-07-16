@@ -18,6 +18,8 @@ export default class Preload extends Phaser.Scene {
         frameWidth: 163,
         frameHeight: 285
       });
+      this.load.audio("songStart", "./public/sounds/songStart.mp3")
+      this.load.audio("songGame", "./public/sounds/songGame.mp3")
     }
   
     create() {
@@ -25,3 +27,4 @@ export default class Preload extends Phaser.Scene {
       this.scene.start("start");
     }
   }
+  

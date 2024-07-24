@@ -259,14 +259,26 @@ export default class Game extends Phaser.Scene {
     
     // Creación de power-ups con probabilidades
     if (Phaser.Math.Between(0, 9) < 1) {
-      let powerUp = this.powerUpGroup.create(platform.x, platform.y - platform.displayHeight / 2 - 20, "watch");
+      let powerUp = this.powerUpGroup.create(
+        platform.x,
+        platform.y - platform.displayHeight / 2 - 20,
+        "watch"
+      );
       powerUp.setScale(1.5);
-      powerUp.setGravityY(1200);
+      this.events.on("postupdate", () => {
+        Phaser.Display.Align.To.TopCenter(powerUp, platform);
+      });
     }
     if (Phaser.Math.Between(0, 9) < 1) {
-      let powerUp = this.powerUpGroup.create(platform.x, platform.y - platform.displayHeight / 2 - 20, "spike");
+      let powerUp = this.powerUpGroup.create(
+        platform.x,
+        platform.y - platform.displayHeight / 2 - 20,
+        "spike"
+      );
       powerUp.setScale(1.5);
-      powerUp.setGravityY(1200);
+      this.events.on("postupdate", () => {
+        Phaser.Display.Align.To.TopCenter(powerUp, platform);
+      });
     }
   }
 
